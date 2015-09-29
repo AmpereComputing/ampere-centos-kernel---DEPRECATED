@@ -40,6 +40,11 @@
 extern char vdso_start, vdso_end;
 static unsigned long vdso_pages __ro_after_init;
 
+#ifdef CONFIG_ARM64_ILP32
+extern char vdso_ilp32_start, vdso_ilp32_end;
+static unsigned long vdso_ilp32_pages __ro_after_init;
+#endif
+
 /*
  * The vDSO data page.
  */
@@ -127,20 +132,24 @@ static struct vm_special_mapping vdso_spec[2] __ro_after_init = {
 	},
 };
 
-static int __init vdso_init(void)
+static int __init vdso_init_common(char *vdso_start, char *vdso_end,
+				   unsigned long *vdso_pagesp,
+				   struct vm_special_mapping *vdso_spec)
 {
 	int i;
+	unsigned long vdso_pages;
 	struct page **vdso_pagelist;
 	unsigned long pfn;
 
-	if (memcmp(&vdso_start, "\177ELF", 4)) {
+	if (memcmp(vdso_start, "\177ELF", 4)) {
 		pr_err("vDSO is not a valid ELF object!\n");
 		return -EINVAL;
 	}
 
-	vdso_pages = (&vdso_end - &vdso_start) >> PAGE_SHIFT;
+	vdso_pages = (vdso_end - vdso_start) >> PAGE_SHIFT;
+	*vdso_pagesp = vdso_pages;
 	pr_info("vdso: %ld pages (%ld code @ %p, %ld data @ %p)\n",
-		vdso_pages + 1, vdso_pages, &vdso_start, 1L, vdso_data);
+		vdso_pages + 1, vdso_pages, vdso_start, 1L, vdso_data);
 
 	/* Allocate the vDSO pagelist, plus a page for the data. */
 	vdso_pagelist = kcalloc(vdso_pages + 1, sizeof(struct page *),
@@ -153,7 +162,7 @@ static int __init vdso_init(void)
 
 
 	/* Grab the vDSO code pages. */
-	pfn = sym_to_pfn(&vdso_start);
+	pfn = sym_to_pfn(vdso_start);
 
 	for (i = 0; i < vdso_pages; i++)
 		vdso_pagelist[i + 1] = pfn_to_page(pfn + i);
@@ -163,16 +172,49 @@ static int __init vdso_init(void)
 
 	return 0;
 }
+
+static int __init vdso_init(void)
+{
+	return vdso_init_common(&vdso_start, &vdso_end, &vdso_pages,
+				vdso_spec);
+}
 arch_initcall(vdso_init);
+
+#ifdef CONFIG_ARM64_ILP32
+static struct vm_special_mapping vdso_ilp32_spec[2] __ro_after_init = {
+	{
+		.name	= "[vvar]",
+	},
+	{
+		.name	= "[vdso]",
+	},
+};
+
+static int __init vdso_ilp32_init(void)
+{
+	return vdso_init_common(&vdso_ilp32_start, &vdso_ilp32_end,
+				&vdso_ilp32_pages, vdso_ilp32_spec);
+}
+arch_initcall(vdso_ilp32_init);
+#endif
 
 int arch_setup_additional_pages(struct linux_binprm *bprm,
 				int uses_interp)
 {
 	struct mm_struct *mm = current->mm;
 	unsigned long vdso_base, vdso_text_len, vdso_mapping_len;
-	void *ret;
+	void* ret;
+	unsigned long pages = vdso_pages;
+	struct vm_special_mapping* spec = vdso_spec;
 
-	vdso_text_len = vdso_pages << PAGE_SHIFT;
+#ifdef CONFIG_ARM64_ILP32
+	if (is_ilp32_compat_task()) {
+	        pages = vdso_ilp32_pages;
+	        spec = vdso_ilp32_spec;
+	}
+#endif
+
+	vdso_text_len = pages << PAGE_SHIFT;
 	/* Be sure to map the data page */
 	vdso_mapping_len = vdso_text_len + PAGE_SIZE;
 
@@ -185,7 +227,7 @@ int arch_setup_additional_pages(struct linux_binprm *bprm,
 	}
 	ret = _install_special_mapping(mm, vdso_base, PAGE_SIZE,
 				       VM_READ|VM_MAYREAD,
-				       &vdso_spec[0]);
+				       &spec[0]);
 	if (IS_ERR(ret))
 		goto up_fail;
 
@@ -194,7 +236,7 @@ int arch_setup_additional_pages(struct linux_binprm *bprm,
 	ret = _install_special_mapping(mm, vdso_base, vdso_text_len,
 				       VM_READ|VM_EXEC|
 				       VM_MAYREAD|VM_MAYWRITE|VM_MAYEXEC,
-				       &vdso_spec[1]);
+				       &spec[1]);
 	if (IS_ERR(ret))
 		goto up_fail;
 
