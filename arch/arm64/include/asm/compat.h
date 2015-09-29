@@ -76,6 +76,9 @@ struct compat_timeval {
 	s32		tv_usec;
 };
 
+/* ILP32 uses 64bit time_t and not the above compat structures */
+#define COMPAT_USE_64BIT_TIME !is_a32_compat_task()
+
 struct compat_stat {
 #ifdef __AARCH64EB__
 	short		st_dev;
