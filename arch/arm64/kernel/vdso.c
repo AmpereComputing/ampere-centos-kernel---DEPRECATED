@@ -108,6 +108,14 @@ int aarch32_setup_vectors_page(struct linux_binprm *bprm, int uses_interp)
 
 	return PTR_ERR_OR_ZERO(ret);
 }
+#else
+int aarch32_setup_vectors_page(struct linux_binprm *bprm, int uses_interp)
+{
+	(void) bprm;
+	(void) uses_interp;
+
+	return -EINVAL;
+}
 #endif /* CONFIG_AARCH32_EL0 */
 
 static struct vm_special_mapping vdso_spec[2] __ro_after_init = {
