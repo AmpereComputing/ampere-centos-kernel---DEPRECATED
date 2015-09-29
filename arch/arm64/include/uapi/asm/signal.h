@@ -22,6 +22,38 @@
 #define MINSIGSTKSZ 5120
 #define SIGSTKSZ    16384
 
+/* For ILP32, sigset should be the same size fields as LP64 so use
+   unsigned long long. */
+#ifdef __ILP32__
+#define __SIGSET_INNER_TYPE __extension__ unsigned long long
+#define _NSIG_BPW 64
+
+# ifdef __AARCH64EB__
+#  define __SIGNAL_INNER(type, field)		\
+	__extension__ struct {			\
+		int __pad_##field;		\
+		type field;			\
+	} __attribute__((aligned(8)))
+# else
+#  define __SIGNAL_INNER(type, field)		\
+	__extension__ struct {			\
+		type field;			\
+		int __pad_##field;		\
+	} __attribute__((aligned(8)))
+# endif
+
+# define __SIGACTION_HANDLER(field)		\
+	__SIGNAL_INNER(__sighandler_t, field)
+
+
+#define __SIGACTION_FLAGS(field)		\
+	__extension__ unsigned long long field
+
+#define __SIGACTION_RESTORER(field)		\
+	__SIGNAL_INNER(__sigrestore_t, field)
+
+#endif
+
 #include <asm-generic/signal.h>
 
 #endif

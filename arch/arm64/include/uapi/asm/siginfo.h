@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2012 ARM Ltd.
+ * Copyright (C) 2014 Cavium Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -17,6 +18,26 @@
 #define __ASM_SIGINFO_H
 
 #define __ARCH_SI_PREAMBLE_SIZE	(4 * sizeof(int))
+
+#ifdef __ILP32__
+# ifdef __AARCH64EB__
+#  define __SIGINFO_INNER(type, field)		\
+		int __pad#field;		\
+		type field
+# else
+#  define __SIGINFO_INNER(type, field)		\
+		type field;			\
+		int __pad#field
+# endif
+
+# undef __SIGINFO_VOIDPOINTER
+# define __SIGINFO_VOIDPOINTER(field)		\
+		__SIGINFO_INNER(void __user*, field)
+# undef __SIGINFO_BAND
+
+# define __SIGINFO_BAND(field)			\
+	__SIGINFO_INNER(long, field)
+#endif
 
 #include <asm-generic/siginfo.h>
 
