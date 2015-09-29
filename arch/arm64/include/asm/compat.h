@@ -299,19 +299,47 @@ struct compat_shmid64_ds {
 	compat_ulong_t __unused5;
 };
 
-static inline int is_compat_task(void)
+#ifdef CONFIG_AARCH32_EL0
+static inline int is_a32_compat_task(void)
 {
 	return test_thread_flag(TIF_32BIT);
+}
+static inline int is_a32_compat_thread(struct thread_info *thread)
+{
+	return test_ti_thread_flag(thread, TIF_32BIT);
+}
+#else
+static inline int is_a32_compat_task(void)
+{
+	return 0;
+}
+static inline int is_a32_compat_thread(struct thread_info *thread)
+{
+	return 0;
+}
+#endif
+
+static inline int is_compat_task(void)
+{
+	return is_a32_compat_task();
 }
 
 static inline int is_compat_thread(struct thread_info *thread)
 {
-	return test_ti_thread_flag(thread, TIF_32BIT);
+	return is_a32_compat_thread(thread);
 }
 
 #else /* !CONFIG_COMPAT */
 
 static inline int is_compat_thread(struct thread_info *thread)
+{
+	return 0;
+}
+static inline int is_a32_compat_thread(struct thread_info *thread)
+{
+	return 0;
+}
+static inline int is_a32_compat_task(void)
 {
 	return 0;
 }

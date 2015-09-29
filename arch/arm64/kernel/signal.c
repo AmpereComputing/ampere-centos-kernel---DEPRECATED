@@ -26,6 +26,7 @@
 #include <linux/tracehook.h>
 #include <linux/ratelimit.h>
 
+#include <asm/compat.h>
 #include <asm/debug-monitors.h>
 #include <asm/elf.h>
 #include <asm/cacheflush.h>
@@ -276,9 +277,11 @@ static int setup_rt_frame(int usig, struct ksignal *ksig, sigset_t *set,
 
 static void setup_restart_syscall(struct pt_regs *regs)
 {
-	if (is_compat_task())
+	if (is_a32_compat_task())
+#ifdef CONFIG_AARCH32_EL0
 		compat_setup_restart_syscall(regs);
 	else
+#endif
 		regs->regs[8] = __NR_restart_syscall;
 }
 
@@ -295,11 +298,13 @@ static void handle_signal(struct ksignal *ksig, struct pt_regs *regs)
 	/*
 	 * Set up the stack frame
 	 */
-	if (is_compat_task()) {
+	if (is_a32_compat_task()) {
+#ifdef CONFIG_AARCH32_EL0
 		if (ksig->ka.sa.sa_flags & SA_SIGINFO)
 			ret = compat_setup_rt_frame(usig, ksig, oldset, regs);
 		else
 			ret = compat_setup_frame(usig, ksig, oldset, regs);
+#endif
 	} else {
 		ret = setup_rt_frame(usig, ksig, oldset, regs);
 	}
