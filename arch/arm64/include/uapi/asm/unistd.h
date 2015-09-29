@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2012 ARM Ltd.
+ * Copyright (C) 2015 Cavium Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -13,6 +14,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+/* For ILP32 AARCH64, we want to use the non compat names. */
+#if defined(__aarch64__) && defined(__ILP32__)
+#define __SYSCALL_NONCOMPAT
+#endif
 
 #define __ARCH_WANT_RENAMEAT
 
