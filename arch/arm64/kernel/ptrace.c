@@ -184,7 +184,7 @@ static void ptrace_hbptriggered(struct perf_event *bp,
 		.si_addr	= (void __user *)(bkpt->trigger),
 	};
 
-#ifdef CONFIG_COMPAT
+#ifdef CONFIG_AARCH32_EL0
 	int i;
 
 	if (!is_compat_task())
@@ -768,6 +768,7 @@ static const struct user_regset_view user_aarch64_view = {
 
 #ifdef CONFIG_COMPAT
 #include <linux/compat.h>
+#ifdef CONFIG_AARCH32_EL0
 
 enum compat_regset {
 	REGSET_COMPAT_GPR,
@@ -968,7 +969,7 @@ static int compat_tls_set(struct task_struct *target,
 static const struct user_regset aarch32_regsets[] = {
 	[REGSET_COMPAT_GPR] = {
 		.core_note_type = NT_PRSTATUS,
-		.n = COMPAT_ELF_NGREG,
+		.n = COMPAT_A32_ELF_NGREG,
 		.size = sizeof(compat_elf_greg_t),
 		.align = sizeof(compat_elf_greg_t),
 		.get = compat_gpr_get,
@@ -992,7 +993,7 @@ static const struct user_regset_view user_aarch32_view = {
 static const struct user_regset aarch32_ptrace_regsets[] = {
 	[REGSET_GPR] = {
 		.core_note_type = NT_PRSTATUS,
-		.n = COMPAT_ELF_NGREG,
+		.n = COMPAT_A32_ELF_NGREG,
 		.size = sizeof(compat_elf_greg_t),
 		.align = sizeof(compat_elf_greg_t),
 		.get = compat_gpr_get,
@@ -1224,8 +1225,8 @@ static int compat_ptrace_sethbpregs(struct task_struct *tsk, compat_long_t num,
 }
 #endif	/* CONFIG_HAVE_HW_BREAKPOINT */
 
-long compat_arch_ptrace(struct task_struct *child, compat_long_t request,
-			compat_ulong_t caddr, compat_ulong_t cdata)
+long compat_a32_arch_ptrace(struct task_struct *child, compat_long_t request,
+			    compat_ulong_t caddr, compat_ulong_t cdata)
 {
 	unsigned long addr = caddr;
 	unsigned long data = cdata;
@@ -1301,11 +1302,27 @@ long compat_arch_ptrace(struct task_struct *child, compat_long_t request,
 
 	return ret;
 }
-#endif /* CONFIG_COMPAT */
+#else /* !CONFIG_AARCH32_EL0 */
+long compat_a32_arch_ptrace(struct task_struct *child, compat_long_t request,
+			    compat_ulong_t caddr, compat_ulong_t cdata)
+{
+	return -1;
+}
+#endif /* !CONFIG_AARCH32_EL0 */
+
+long compat_arch_ptrace(struct task_struct *child, compat_long_t request,
+			compat_ulong_t caddr, compat_ulong_t cdata)
+{
+	if (is_compat_task())
+		return compat_a32_arch_ptrace(child, request, caddr, cdata);
+	return compat_ptrace_request(child, request, caddr, cdata);
+}
+#endif
+
 
 const struct user_regset_view *task_user_regset_view(struct task_struct *task)
 {
-#ifdef CONFIG_COMPAT
+#ifdef CONFIG_AARCH32_EL0
 	/*
 	 * Core dumping of 32-bit tasks or compat ptrace requests must use the
 	 * user_aarch32_view compatible with arm32. Native ptrace requests on

@@ -433,3 +433,18 @@ asmlinkage void do_notify_resume(struct pt_regs *regs,
 		thread_flags = READ_ONCE(current_thread_info()->flags);
 	} while (thread_flags & _TIF_WORK_MASK);
 }
+
+/*
+ * Some functions are needed for compat ptrace but we don't define
+ * them if we don't have AARCH32 support compiled in
+ */
+#if defined CONFIG_COMPAT && !defined CONFIG_AARCH32_EL0
+int copy_siginfo_to_user32(compat_siginfo_t __user *to, const siginfo_t *from)
+{
+	return -EFAULT;
+}
+int copy_siginfo_from_user32(siginfo_t *to, compat_siginfo_t __user *from)
+{
+	return -EFAULT;
+}
+#endif

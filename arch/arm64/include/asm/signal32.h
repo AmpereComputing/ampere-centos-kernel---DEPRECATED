@@ -20,6 +20,7 @@
 #ifdef CONFIG_COMPAT
 #include <linux/compat.h>
 
+#ifdef CONFIG_AARCH32_EL0
 #define AARCH32_KERN_SIGRET_CODE_OFFSET	0x500
 
 extern const compat_ulong_t aarch32_sigret_code[6];
@@ -47,6 +48,7 @@ static inline int compat_setup_rt_frame(int usig, struct ksignal *ksig, sigset_t
 static inline void compat_setup_restart_syscall(struct pt_regs *regs)
 {
 }
+#endif /* CONFIG_AARCH32_EL0 */
 #endif /* CONFIG_COMPAT */
 #endif /* __KERNEL__ */
 #endif /* __ASM_SIGNAL32_H */
