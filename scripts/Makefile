@@ -23,6 +23,10 @@ hostprogs-$(CONFIG_SYSTEM_EXTRA_CERTIFICATE) += insert-sys-cert
 
 HOSTCFLAGS_sortextable.o = -I$(srctree)/tools/include
 HOSTCFLAGS_asn1_compiler.o = -I$(srctree)/include
+ifeq ($(shell $(HOSTCC) -v 2>&1 | grep -c "Target: aarch64-apm-linux-gnu"), 1)
+HOSTCFLAGS_sign-file.o = -I/usr/include -Wl,-rpath=/usr/lib64 -L/usr/lib64
+HOSTCFLAGS_extract-cert.o = -I/usr/include -Wl,-rpath=/usr/lib64 -L/usr/lib64
+endif
 HOSTLOADLIBES_sign-file = -lcrypto
 HOSTLOADLIBES_extract-cert = -lcrypto
 
