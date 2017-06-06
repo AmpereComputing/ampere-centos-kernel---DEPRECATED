@@ -174,7 +174,9 @@ static int xhci_plat_probe(struct platform_device *pdev)
 	 * 3. xhci_plat is grandchild of a pci device (dwc3-pci)
 	 */
 	sysdev = &pdev->dev;
-	if (sysdev->parent && !sysdev->of_node && sysdev->parent->of_node)
+	if (sysdev->parent && (sysdev->fwnode->type == FWNODE_PDATA) &&
+		(is_of_node(sysdev->parent->fwnode) ||
+			is_acpi_device_node(sysdev->parent->fwnode)))
 		sysdev = sysdev->parent;
 #ifdef CONFIG_PCI
 	else if (sysdev->parent && sysdev->parent->parent &&
