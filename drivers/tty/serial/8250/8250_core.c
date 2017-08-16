@@ -652,7 +652,7 @@ static int univ8250_console_match(struct console *co, char *name, int idx,
 	for (i = 0; i < nr_uarts; i++) {
 		struct uart_port *port = &serial8250_ports[i].port;
 
-		if (!port->dw_quirk && port->iotype != iotype)
+		if (port->iotype != iotype)
 			continue;
 		if ((iotype == UPIO_MEM || iotype == UPIO_MEM16 ||
 		     iotype == UPIO_MEM32 || iotype == UPIO_MEM32BE)
@@ -988,7 +988,6 @@ int serial8250_register_8250_port(struct uart_8250_port *up)
 		uart->port.iotype       = up->port.iotype;
 		uart->port.flags        = up->port.flags | UPF_BOOT_AUTOCONF;
 		uart->bugs		= up->bugs;
-		uart->port.dw_quirk     = up->port.dw_quirk;
 		uart->port.mapbase      = up->port.mapbase;
 		uart->port.mapsize      = up->port.mapsize;
 		uart->port.private_data = up->port.private_data;

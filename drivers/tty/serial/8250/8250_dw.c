@@ -352,7 +352,6 @@ static void dw8250_quirks(struct uart_port *p, struct dw8250_data *data)
 			p->iotype = UPIO_MEM32;
 			p->regshift = 2;
 			p->serial_in = dw8250_serial_in32;
-			p->dw_quirk = 1;
 			data->uart_16550_compatible = true;
 		}
 	}
