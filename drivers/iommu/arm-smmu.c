@@ -255,6 +255,7 @@ enum arm_smmu_s2cr_privcfg {
 #define ARM_MMU500_ACTLR_CPRE		(1 << 1)
 
 #define ARM_MMU500_ACR_CACHE_LOCK	(1 << 26)
+#define ARM_MMU500_ACR_S2CRB_TLBEN	(1 << 10)
 #define ARM_MMU500_ACR_SMTNMB_TLBEN	(1 << 8)
 
 #define CB_PAR_F			(1 << 0)
@@ -1713,7 +1714,7 @@ static void arm_smmu_device_reset(struct arm_smmu_device *smmu)
 		 * Allow unmatched Stream IDs to allocate bypass
 		 * TLB entries for reduced latency.
 		 */
-		reg |= ARM_MMU500_ACR_SMTNMB_TLBEN;
+		reg |= ARM_MMU500_ACR_SMTNMB_TLBEN | ARM_MMU500_ACR_S2CRB_TLBEN;
 		writel_relaxed(reg, gr0_base + ARM_SMMU_GR0_sACR);
 	}
 
