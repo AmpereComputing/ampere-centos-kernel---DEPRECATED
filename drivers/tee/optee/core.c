@@ -14,6 +14,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/acpi.h>
 #include <linux/arm-smccc.h>
 #include <linux/errno.h>
 #include <linux/io.h>
@@ -429,20 +430,29 @@ static optee_invoke_fn *get_invoke_func(struct device_node *np)
 {
 	const char *method;
 
-	pr_info("probing for conduit method from DT.\n");
+	if (acpi_disabled) {
+		pr_info("probing for conduit method from DT.\n");
+		if (of_property_read_string(np, "method", &method)) {
+			pr_warn("missing \"method\" property\n");
+			return ERR_PTR(-ENXIO);
+		}
 
-	if (of_property_read_string(np, "method", &method)) {
-		pr_warn("missing \"method\" property\n");
-		return ERR_PTR(-ENXIO);
+		if (!strcmp("hvc", method))
+			return optee_smccc_hvc;
+		else if (!strcmp("smc", method))
+			return optee_smccc_smc;
+
+		pr_warn("invalid \"method\" property: %s\n", method);
+		return ERR_PTR(-EINVAL);
+	} else {
+		if (!(acpi_gbl_FADT.arm_boot_flags & ACPI_FADT_PSCI_COMPLIANT))
+			return ERR_PTR(-EINVAL);
+
+		if (acpi_gbl_FADT.arm_boot_flags & ACPI_FADT_PSCI_USE_HVC)
+			return optee_smccc_hvc;
+		else
+			return optee_smccc_smc;
 	}
-
-	if (!strcmp("hvc", method))
-		return optee_smccc_hvc;
-	else if (!strcmp("smc", method))
-		return optee_smccc_smc;
-
-	pr_warn("invalid \"method\" property: %s\n", method);
-	return ERR_PTR(-EINVAL);
 }
 
 static struct optee *optee_probe(struct device_node *np)
@@ -579,19 +589,21 @@ static struct optee *optee_svc;
 
 static int __init optee_driver_init(void)
 {
+	struct device_node *np = NULL;
 	struct device_node *fw_np;
-	struct device_node *np;
 	struct optee *optee;
 
-	/* Node is supposed to be below /firmware */
-	fw_np = of_find_node_by_name(NULL, "firmware");
-	if (!fw_np)
-		return -ENODEV;
+	if (acpi_disabled) {
+		/* Node is supposed to be below /firmware */
+		fw_np = of_find_node_by_name(NULL, "firmware");
+		if (!fw_np)
+			return -ENODEV;
 
-	np = of_find_matching_node(fw_np, optee_match);
-	of_node_put(fw_np);
-	if (!np)
-		return -ENODEV;
+		np = of_find_matching_node(fw_np, optee_match);
+		of_node_put(fw_np);
+		if (!np)
+			return -ENODEV;
+	}
 
 	optee = optee_probe(np);
 	of_node_put(np);
