@@ -1469,7 +1469,7 @@ int valid_user_regs(struct user_pt_regs *regs, struct task_struct *task)
 	if (!test_tsk_thread_flag(task, TIF_SINGLESTEP))
 		regs->pstate &= ~DBG_SPSR_SS;
 
-	if (is_compat_thread(task_thread_info(task)))
+	if (is_a32_compat_thread(task_thread_info(task)))
 		return valid_compat_regs(regs);
 	else
 		return valid_native_regs(regs);
