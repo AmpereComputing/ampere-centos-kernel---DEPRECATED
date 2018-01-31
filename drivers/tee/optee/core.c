@@ -428,31 +428,7 @@ static void optee_smccc_hvc(unsigned long a0, unsigned long a1,
 
 static optee_invoke_fn *get_invoke_func(struct device_node *np)
 {
-	const char *method;
-
-	if (acpi_disabled) {
-		pr_info("probing for conduit method from DT.\n");
-		if (of_property_read_string(np, "method", &method)) {
-			pr_warn("missing \"method\" property\n");
-			return ERR_PTR(-ENXIO);
-		}
-
-		if (!strcmp("hvc", method))
-			return optee_smccc_hvc;
-		else if (!strcmp("smc", method))
-			return optee_smccc_smc;
-
-		pr_warn("invalid \"method\" property: %s\n", method);
-		return ERR_PTR(-EINVAL);
-	} else {
-		if (!(acpi_gbl_FADT.arm_boot_flags & ACPI_FADT_PSCI_COMPLIANT))
-			return ERR_PTR(-EINVAL);
-
-		if (acpi_gbl_FADT.arm_boot_flags & ACPI_FADT_PSCI_USE_HVC)
-			return optee_smccc_hvc;
-		else
-			return optee_smccc_smc;
-	}
+	return optee_smccc_smc;
 }
 
 static struct optee *optee_probe(struct device_node *np)
