@@ -388,7 +388,7 @@ tsk	.req	x28		// current thread_info
 	ldr_l	x1, handle_arch_irq
 	mov	x0, sp
 	irq_stack_entry
-	blr	x1
+	blr_nospec	x1
 	irq_stack_exit
 	.endm
 
@@ -902,7 +902,7 @@ el0_svc_naked:					// compat entry point
 	cmp     wscno, wsc_nr			// check upper syscall limit
 	b.hs	ni_sys
 	ldr	x16, [stbl, xscno, lsl #3]	// address in the syscall table
-	blr	x16				// call sys_* routine
+	blr_nospec	x16				// call sys_* routine
 	b	ret_fast_syscall
 ni_sys:
 	mov	x0, sp
@@ -932,7 +932,7 @@ __sys_trace:
 	ldp	x4, x5, [sp, #S_X4]
 	ldp	x6, x7, [sp, #S_X6]
 	ldr	x16, [stbl, xscno, lsl #3]	// address in the syscall table
-	blr	x16				// call sys_* routine
+	blr_nospec	x16				// call sys_* routine
 
 __sys_trace_return:
 	str	x0, [sp, #S_X0]			// save returned x0
@@ -1114,7 +1114,7 @@ ENTRY(ret_from_fork)
 	bl	schedule_tail
 	cbz	x19, 1f				// not a kernel thread
 	mov	x0, x20
-	blr	x19
+	blr_nospec	x19
 1:	get_thread_info tsk
 	b	ret_to_user
 ENDPROC(ret_from_fork)
