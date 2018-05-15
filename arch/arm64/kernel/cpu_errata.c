@@ -638,6 +638,54 @@ static const struct midr_range cavium_erratum_30115_cpus[] = {
 };
 #endif
 
+#ifdef CONFIG_RETPOLINE
+
+static inline bool retp_compiler(void)
+{
+	return __is_defined(RETPOLINE);
+}
+
+/* The Spectre V2 mitigation variants */
+enum spectre_v2_mitigation {
+	SPECTRE_V2_NOT_AFFECTED,
+	SPECTRE_V2_RETPOLINE_MINIMAL,
+	SPECTRE_V2_RETPOLINE_GENERIC,
+};
+
+static const char *spectre_v2_strings[] = {
+	[SPECTRE_V2_NOT_AFFECTED]	= "Not affected",
+	[SPECTRE_V2_RETPOLINE_MINIMAL]	= "Vulnerable: Minimal ASM retpoline",
+	[SPECTRE_V2_RETPOLINE_GENERIC]	= "Mitigation: Full retpoline",
+};
+
+static enum spectre_v2_mitigation spectre_v2_enabled = SPECTRE_V2_NOT_AFFECTED;
+
+static bool spectre_v2_bad_module;
+
+bool retpoline_module_ok(bool has_retpoline)
+{
+	if (has_retpoline)
+		return true;
+
+	pr_err("System may be vulnerable to spectre v2\n");
+	spectre_v2_bad_module = true;
+	return false;
+}
+
+static inline const char *spectre_v2_module_string(void)
+{
+	return spectre_v2_bad_module ? " - vulnerable module loaded" : "";
+}
+
+static void
+enable_retpoline(const struct arm64_cpu_capabilities *__unused)
+{
+	spectre_v2_enabled = retp_compiler() ? SPECTRE_V2_RETPOLINE_GENERIC :
+					       SPECTRE_V2_RETPOLINE_MINIMAL;
+}
+
+#endif
+
 #ifdef CONFIG_ARM64_WORKAROUND_CLEAN_CACHE
 static const struct midr_range workaround_clean_cache[] = {
 #if	defined(CONFIG_ARM64_ERRATUM_826319) || \
@@ -778,6 +826,15 @@ const struct arm64_cpu_capabilities arm64_errata[] = {
 		.matches = has_ssbd_mitigation,
 		.midr_range_list = arm64_ssb_cpus,
 	},
+#ifdef CONFIG_RETPOLINE
+	{
+		.desc = "speculative branch prediction using retpoline",
+		.capability = ARM64_RETPOLINE,
+		.type = ARM64_CPUCAP_BOOT_RESTRICTED_CPU_LOCAL_FEATURE,
+		.cpu_enable = enable_retpoline,
+		CAP_MIDR_ALL_VERSIONS(MIDR_APM_POTENZA),
+	},
+#endif
 	{
 	}
 };
