@@ -25,6 +25,9 @@ HOSTCFLAGS_asn1_compiler.o = -I$(srctree)/include
 ifeq ($(shell $(HOSTCC) -v 2>&1 | grep -c "Target: aarch64-apm-linux-gnu"), 1)
 HOSTCFLAGS_sign-file.o = -I/usr/include -Wl,-rpath=/usr/lib64 -L/usr/lib64
 HOSTCFLAGS_extract-cert.o = -I/usr/include -Wl,-rpath=/usr/lib64 -L/usr/lib64
+else ifeq ($(shell $(HOSTCC) -v 2>&1 | grep -c "Target: aarch64-amp-linux-gnu"), 1)
+HOSTCFLAGS_sign-file.o = -I/usr/include -Wl,-rpath=/usr/lib64 -L/usr/lib64 --sysroot=/
+HOSTCFLAGS_extract-cert.o = -I/usr/include -Wl,-rpath=/usr/lib64 -L/usr/lib64 --sysroot=/
 endif
 HOSTLOADLIBES_sign-file = -lcrypto
 HOSTLOADLIBES_extract-cert = -lcrypto
