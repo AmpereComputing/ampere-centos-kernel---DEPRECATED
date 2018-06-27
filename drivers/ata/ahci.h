@@ -251,6 +251,7 @@ enum {
 	AHCI_HFLAG_YES_ALPM		= (1 << 23), /* force ALPM cap on */
 	AHCI_HFLAG_NO_WRITE_TO_RO	= (1 << 24), /* don't write to read
 							only registers */
+	AHCI_HFLAG_NO_ALPM		= (1 << 26), /* no ALPM */
 
 	/* ap->flags bits */
 
