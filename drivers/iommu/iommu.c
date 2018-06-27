@@ -19,6 +19,7 @@
 #define pr_fmt(fmt)    "iommu: " fmt
 
 #include <linux/device.h>
+#include <linux/dmi.h>
 #include <linux/kernel.h>
 #include <linux/bug.h>
 #include <linux/types.h>
@@ -1009,6 +1010,7 @@ struct iommu_group *iommu_group_get_for_dev(struct device *dev)
 	const struct iommu_ops *ops = dev->bus->iommu_ops;
 	struct iommu_group *group;
 	int ret;
+	const char *dmi_info;
 
 	group = iommu_group_get(dev);
 	if (group)
@@ -1023,6 +1025,21 @@ struct iommu_group *iommu_group_get_for_dev(struct device *dev)
 
 	if (IS_ERR(group))
 		return group;
+
+	/*
+	 * Ampere eMAG work around:
+	 * - Don't let the system go in translation mode (aka: DOMAIN_DMA)
+	 * as the support is not completed yet. The side effect is significant
+	 * performance drop or system crashing at boot.
+	 * - Force passthrough mode for the following model
+	 */
+	dmi_info = dmi_get_system_info(DMI_PRODUCT_FAMILY);
+	if (strncmp(dmi_info, "APM X-Gene", 10) == 0 ||
+	    strncmp(dmi_info, "eMAG", 4) == 0 ||
+	    strncmp(dmi_info, "Ampere(TM) eMAG", 15) == 0) {
+		dev_warn(dev, "Ampere eMAG IOMMU detected, forcing passthrough mode\n");
+		iommu_def_domain_type = IOMMU_DOMAIN_IDENTITY;
+	}
 
 	/*
 	 * Try to allocate a default domain - needs support from the
