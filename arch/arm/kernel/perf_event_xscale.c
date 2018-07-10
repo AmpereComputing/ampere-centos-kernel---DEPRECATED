@@ -381,7 +381,6 @@ static int xscale1pmu_init(struct arm_pmu *cpu_pmu)
 	cpu_pmu->stop		= xscale1pmu_stop;
 	cpu_pmu->map_event	= xscale_map_event;
 	cpu_pmu->num_events	= 3;
-	cpu_pmu->max_period	= (1LLU << 32) - 1;
 
 	return 0;
 }
@@ -751,7 +750,6 @@ static int xscale2pmu_init(struct arm_pmu *cpu_pmu)
 	cpu_pmu->stop		= xscale2pmu_stop;
 	cpu_pmu->map_event	= xscale_map_event;
 	cpu_pmu->num_events	= 5;
-	cpu_pmu->max_period	= (1LLU << 32) - 1;
 
 	return 0;
 }
