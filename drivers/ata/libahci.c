@@ -509,11 +509,6 @@ void ahci_save_initial_config(struct device *dev, struct ahci_host_priv *hpriv)
 		cap |= HOST_CAP_ALPM;
 	}
 
-	if ((cap & HOST_CAP_ALPM) && (hpriv->flags & AHCI_HFLAG_NO_ALPM)) {
-		dev_info(dev, "controller can't do ALPM, turning off CAP_ALPM\n");
-		cap &= ~HOST_CAP_ALPM;
-	}
-
 	if (hpriv->force_port_map && port_map != hpriv->force_port_map) {
 		dev_info(dev, "forcing port_map 0x%x -> 0x%x\n",
 			 port_map, hpriv->force_port_map);
