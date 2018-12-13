@@ -914,9 +914,9 @@ static void __armv8pmu_probe_pmu(void *info)
 	int pmuver;
 
 	dfr0 = read_sysreg(id_aa64dfr0_el1);
-	pmuver = cpuid_feature_extract_signed_field(dfr0,
+	pmuver = cpuid_feature_extract_unsigned_field(dfr0,
 			ID_AA64DFR0_PMUVER_SHIFT);
-	if (pmuver < 1)
+	if (pmuver == 0xf || pmuver == 0)
 		return;
 
 	if (!(armv8pmu_pmcr_read() >> ARMV8_PMU_PMCR_IMP_SHIFT))
