@@ -7,11 +7,19 @@
 #include <linux/perf_event.h>
 
 /*
- * Given the exclude_{host,guest} attributes, determine if we are going
- * to need to switch counters at guest entry/exit.
+ * Given the perf event attributes and system type, determine
+ * if we are going to need to switch counters at guest entry/exit.
  */
 static bool kvm_pmu_switch_needed(struct perf_event_attr *attr)
 {
+	/**
+	 * With VHE the guest kernel runs at EL1 and the host at EL2,
+	 * where user (EL0) is excluded then we have no reason to switch
+	 * counters.
+	 */
+	if (has_vhe() && attr->exclude_user)
+		return false;
+
 	/* Only switch if attributes are different */
 	return (attr->exclude_host != attr->exclude_guest);
 }
@@ -42,4 +50,80 @@ void kvm_clr_pmu_events(u32 clr)
 
 	ctx->pmu_events.events_host &= ~clr;
 	ctx->pmu_events.events_guest &= ~clr;
+}
+
+/*
+ * Modify ARMv8 PMU events to include EL0 counting
+ */
+static void kvm_vcpu_pmu_enable_el0(unsigned long events)
+{
+	u64 typer;
+	u32 counter;
+
+	for_each_set_bit(counter, &events, 32) {
+		write_sysreg(counter, pmselr_el0);
+		isb();
+		typer = read_sysreg(pmxevtyper_el0) & ~ARMV8_PMU_EXCLUDE_EL0;
+		write_sysreg(typer, pmxevtyper_el0);
+		isb();
+	}
+}
+
+/*
+ * Modify ARMv8 PMU events to exclude EL0 counting
+ */
+static void kvm_vcpu_pmu_disable_el0(unsigned long events)
+{
+	u64 typer;
+	u32 counter;
+
+	for_each_set_bit(counter, &events, 32) {
+		write_sysreg(counter, pmselr_el0);
+		isb();
+		typer = read_sysreg(pmxevtyper_el0) | ARMV8_PMU_EXCLUDE_EL0;
+		write_sysreg(typer, pmxevtyper_el0);
+		isb();
+	}
+}
+
+/*
+ * On VHE ensure that only guest events have EL0 counting enabled
+ */
+void kvm_vcpu_pmu_restore_guest(struct kvm_vcpu *vcpu)
+{
+	struct kvm_cpu_context *host_ctxt;
+	struct kvm_host_data *host;
+	u32 events_guest, events_host;
+
+	if (!has_vhe())
+		return;
+
+	host_ctxt = vcpu->arch.host_cpu_context;
+	host = container_of(host_ctxt, struct kvm_host_data, host_ctxt);
+	events_guest = host->pmu_events.events_guest;
+	events_host = host->pmu_events.events_host;
+
+	kvm_vcpu_pmu_enable_el0(events_guest);
+	kvm_vcpu_pmu_disable_el0(events_host);
+}
+
+/*
+ * On VHE ensure that only host events have EL0 counting enabled
+ */
+void kvm_vcpu_pmu_restore_host(struct kvm_vcpu *vcpu)
+{
+	struct kvm_cpu_context *host_ctxt;
+	struct kvm_host_data *host;
+	u32 events_guest, events_host;
+
+	if (!has_vhe())
+		return;
+
+	host_ctxt = vcpu->arch.host_cpu_context;
+	host = container_of(host_ctxt, struct kvm_host_data, host_ctxt);
+	events_guest = host->pmu_events.events_guest;
+	events_host = host->pmu_events.events_host;
+
+	kvm_vcpu_pmu_enable_el0(events_host);
+	kvm_vcpu_pmu_disable_el0(events_guest);
 }
