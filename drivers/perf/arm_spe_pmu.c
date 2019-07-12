@@ -1179,7 +1179,7 @@ static const struct platform_device_id arm_spe_match[] = {
 MODULE_DEVICE_TABLE(platform, arm_spe_match);
 
 static const struct acpi_device_id arm_spe_acpi_match[] = {
-	{ "AMPC0D91", 0},
+	{ "AMPC0001", 0},
 	{},
 };
 MODULE_DEVICE_TABLE(acpi, arm_spe_acpi_match);
