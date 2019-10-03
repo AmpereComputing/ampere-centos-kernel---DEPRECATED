@@ -315,25 +315,15 @@ endmenu
 
 menu "Kernel Features"
 
-config RETPOLINE
-	bool "Avoid speculative indirect branches in kernel"
-	default y
-	select STACK_VALIDATION if HAVE_STACK_VALIDATION
-	help
-	  Compile kernel with the retpoline compiler options to guard against
-	  kernel-to-user data leaks by avoiding speculative indirect
-	  branches. Requires a compiler with -mindirect-branch=thunk-extern
-	  support for full protection. The kernel may run slower.
-
-	  Without compiler support, at least indirect branches in assembler
-	  code are eliminated. Since this includes the syscall entry path,
-	  it is not entirely pointless.
-
 menu "ARM errata workarounds via the alternatives framework"
+
+config ARM64_WORKAROUND_CLEAN_CACHE
+	def_bool n
 
 config ARM64_ERRATUM_826319
 	bool "Cortex-A53: 826319: System might deadlock if a write cannot complete until read data is accepted"
 	default y
+	select ARM64_WORKAROUND_CLEAN_CACHE
 	help
 	  This option adds an alternative code sequence to work around ARM
 	  erratum 826319 on Cortex-A53 parts up to r0p2 with an AMBA 4 ACE or
@@ -355,6 +345,7 @@ config ARM64_ERRATUM_826319
 config ARM64_ERRATUM_827319
 	bool "Cortex-A53: 827319: Data cache clean instructions might cause overlapping transactions to the interconnect"
 	default y
+	select ARM64_WORKAROUND_CLEAN_CACHE
 	help
 	  This option adds an alternative code sequence to work around ARM
 	  erratum 827319 on Cortex-A53 parts up to r0p2 with an AMBA 5 CHI
@@ -376,6 +367,7 @@ config ARM64_ERRATUM_827319
 config ARM64_ERRATUM_824069
 	bool "Cortex-A53: 824069: Cache line might not be marked as clean after a CleanShared snoop"
 	default y
+	select ARM64_WORKAROUND_CLEAN_CACHE
 	help
 	  This option adds an alternative code sequence to work around ARM
 	  erratum 824069 on Cortex-A53 parts up to r0p2 when it is connected
@@ -398,6 +390,7 @@ config ARM64_ERRATUM_824069
 config ARM64_ERRATUM_819472
 	bool "Cortex-A53: 819472: Store exclusive instructions might cause data corruption"
 	default y
+	select ARM64_WORKAROUND_CLEAN_CACHE
 	help
 	  This option adds an alternative code sequence to work around ARM
 	  erratum 819472 on Cortex-A53 parts up to r0p1 with an L2 cache
@@ -620,6 +613,25 @@ config QCOM_FALKOR_ERRATUM_E1041
 
 	  If unsure, say Y.
 
+config FUJITSU_ERRATUM_010001
+	bool "Fujitsu-A64FX erratum E#010001: Undefined fault may occur wrongly"
+	default y
+	help
+	  This option adds workaround for Fujitsu-A64FX erratum E#010001.
+	  On some variants of the Fujitsu-A64FX cores ver(1.0, 1.1), memory
+	  accesses may cause undefined fault (Data abort, DFSC=0b111111).
+	  This fault occurs under a specific hardware condition when a
+	  load/store instruction performs an address translation using:
+	  case-1  TTBR0_EL1 with TCR_EL1.NFD0 == 1.
+	  case-2  TTBR0_EL2 with TCR_EL2.NFD0 == 1.
+	  case-3  TTBR1_EL1 with TCR_EL1.NFD1 == 1.
+	  case-4  TTBR1_EL2 with TCR_EL2.NFD1 == 1.
+
+	  The workaround is to ensure these bits are clear in TCR_ELx.
+	  The workaround only affect the Fujitsu-A64FX.
+
+	  If unsure, say Y.
+
 endmenu
 
 
@@ -815,13 +827,6 @@ config NEED_PER_CPU_EMBED_FIRST_CHUNK
 config HOLES_IN_ZONE
 	def_bool y
 	depends on NUMA
-
-# Some NUMA nodes have memory ranges that span other nodes.
-# Even though a pfn is valid and between a node's start and end pfns,
-# it may not reside on that node.
-config NODES_SPAN_OTHER_NODES
-	def_bool y
-	depends on ACPI_NUMA
 
 source kernel/Kconfig.preempt
 source kernel/Kconfig.hz

@@ -1079,6 +1079,15 @@ static inline int acpi_node_get_property_reference(
 		MAX_ACPI_REFERENCE_ARGS, args);
 }
 
+static inline bool acpi_dev_has_props(const struct acpi_device *adev)
+{
+	return !list_empty(&adev->data.properties);
+}
+
+struct acpi_device_properties *
+acpi_data_add_props(struct acpi_device_data *data, const guid_t *guid,
+		    const union acpi_object *properties);
+
 int acpi_node_prop_get(const struct fwnode_handle *fwnode, const char *propname,
 		       void **valptr);
 int acpi_dev_prop_read_single(struct acpi_device *adev,
@@ -1303,7 +1312,6 @@ static inline int lpit_read_residency_count_address(u64 *address)
 #ifdef CONFIG_ACPI_PPTT
 int find_acpi_cpu_topology(unsigned int cpu, int level);
 int find_acpi_cpu_topology_package(unsigned int cpu);
-int find_acpi_cpu_topology_hetero_id(unsigned int cpu);
 int find_acpi_cpu_cache_topology(unsigned int cpu, int level);
 #else
 static inline int find_acpi_cpu_topology(unsigned int cpu, int level)
@@ -1311,10 +1319,6 @@ static inline int find_acpi_cpu_topology(unsigned int cpu, int level)
 	return -EINVAL;
 }
 static inline int find_acpi_cpu_topology_package(unsigned int cpu)
-{
-	return -EINVAL;
-}
-static inline int find_acpi_cpu_topology_hetero_id(unsigned int cpu)
 {
 	return -EINVAL;
 }

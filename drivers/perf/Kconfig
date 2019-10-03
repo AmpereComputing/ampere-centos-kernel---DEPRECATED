@@ -40,13 +40,6 @@ config ARM_CCN
 	  PMU (perf) driver supporting the ARM CCN (Cache Coherent Network)
 	  interconnect.
 
-config ARM_CMN
-	tristate "Arm CMN-600 PMU support"
-	depends on ARM || ARM64
-	help
-	  Support for PMU events monitoring on the Arm CMN-600 Coherent Mesh
-	  Network interconnect.
-
 config ARM_PMU
 	depends on ARM || ARM64
 	bool "ARM PMU framework"
@@ -108,12 +101,5 @@ config ARM_SPE_PMU
 	  Enable perf support for the ARMv8.2 Statistical Profiling
 	  Extension, which provides periodic sampling of operations in
 	  the CPU pipeline and reports this via the perf AUX interface.
-
-config ARM_DMC620_PMU
-	bool "Enable support for the DMC-620 PMU"
-	depends on ARM64 && ACPI
-	default n
-	help
-	  Enable perf support for the DMC-620 PMU.
 
 endmenu

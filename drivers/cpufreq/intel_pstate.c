@@ -383,7 +383,10 @@ static int intel_pstate_get_cppc_guranteed(int cpu)
 	if (ret)
 		return ret;
 
-	return cppc_perf.guaranteed_perf;
+	if (cppc_perf.guaranteed_perf)
+		return cppc_perf.guaranteed_perf;
+
+	return cppc_perf.nominal_perf;
 }
 
 #else
@@ -2049,7 +2052,8 @@ static int intel_pstate_set_policy(struct cpufreq_policy *policy)
 static void intel_pstate_adjust_policy_max(struct cpufreq_policy *policy,
 					 struct cpudata *cpu)
 {
-	if (cpu->pstate.max_pstate_physical > cpu->pstate.max_pstate &&
+	if (!hwp_active &&
+	    cpu->pstate.max_pstate_physical > cpu->pstate.max_pstate &&
 	    policy->max < policy->cpuinfo.max_freq &&
 	    policy->max > cpu->pstate.max_freq) {
 		pr_debug("policy->max > max non turbo frequency\n");

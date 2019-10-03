@@ -23,7 +23,6 @@
 #define DRVNAME					PMUNAME "_pmu"
 #define pr_fmt(fmt)				DRVNAME ": " fmt
 
-#include <linux/acpi.h>
 #include <linux/bitops.h>
 #include <linux/bug.h>
 #include <linux/capability.h>
@@ -39,7 +38,6 @@
 #include <linux/of_address.h>
 #include <linux/of_device.h>
 #include <linux/perf_event.h>
-#include <linux/perf/arm_pmu.h>
 #include <linux/platform_device.h>
 #include <linux/printk.h>
 #include <linux/slab.h>
@@ -1172,19 +1170,7 @@ static const struct of_device_id arm_spe_pmu_of_match[] = {
 	{ /* Sentinel */ },
 };
 
-static const struct platform_device_id arm_spe_match[] = {
-	{ ARMV8_SPE_PDEV_NAME, 0},
-	{ }
-};
-MODULE_DEVICE_TABLE(platform, arm_spe_match);
-
-static const struct acpi_device_id arm_spe_acpi_match[] = {
-	{ "AMPC0001", 0},
-	{},
-};
-MODULE_DEVICE_TABLE(acpi, arm_spe_acpi_match);
-
-static int arm_spe_pmu_device_probe(struct platform_device *pdev)
+static int arm_spe_pmu_device_dt_probe(struct platform_device *pdev)
 {
 	int ret;
 	struct arm_spe_pmu *spe_pmu;
@@ -1244,13 +1230,11 @@ static int arm_spe_pmu_device_remove(struct platform_device *pdev)
 }
 
 static struct platform_driver arm_spe_pmu_driver = {
-	.id_table = arm_spe_match,
 	.driver	= {
 		.name		= DRVNAME,
 		.of_match_table	= of_match_ptr(arm_spe_pmu_of_match),
-		.acpi_match_table = ACPI_PTR(arm_spe_acpi_match),
 	},
-	.probe	= arm_spe_pmu_device_probe,
+	.probe	= arm_spe_pmu_device_dt_probe,
 	.remove	= arm_spe_pmu_device_remove,
 };
 
