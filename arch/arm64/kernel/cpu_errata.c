@@ -854,6 +854,11 @@ ssize_t cpu_show_spectre_v2(struct device *dev, struct device_attribute *attr,
 	if (__hardenbp_enab)
 		return sprintf(buf, "Mitigation: Branch predictor hardening\n");
 
+	if (spectre_v2_enabled)
+		return sprintf(buf, "%s%s\n",
+				spectre_v2_strings[spectre_v2_enabled],
+				spectre_v2_module_string());
+
 	return sprintf(buf, "Vulnerable\n");
 }
 
