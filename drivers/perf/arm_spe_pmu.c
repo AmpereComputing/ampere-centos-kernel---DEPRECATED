@@ -23,7 +23,6 @@
 #define DRVNAME					PMUNAME "_pmu"
 #define pr_fmt(fmt)				DRVNAME ": " fmt
 
-#include <linux/acpi.h>
 #include <linux/bitops.h>
 #include <linux/bug.h>
 #include <linux/capability.h>
@@ -1178,12 +1177,6 @@ static const struct platform_device_id arm_spe_match[] = {
 };
 MODULE_DEVICE_TABLE(platform, arm_spe_match);
 
-static const struct acpi_device_id arm_spe_acpi_match[] = {
-	{ "AMPC0D91", 0},
-	{},
-};
-MODULE_DEVICE_TABLE(acpi, arm_spe_acpi_match);
-
 static int arm_spe_pmu_device_probe(struct platform_device *pdev)
 {
 	int ret;
@@ -1248,7 +1241,6 @@ static struct platform_driver arm_spe_pmu_driver = {
 	.driver	= {
 		.name		= DRVNAME,
 		.of_match_table	= of_match_ptr(arm_spe_pmu_of_match),
-		.acpi_match_table = ACPI_PTR(arm_spe_acpi_match),
 	},
 	.probe	= arm_spe_pmu_device_probe,
 	.remove	= arm_spe_pmu_device_remove,
