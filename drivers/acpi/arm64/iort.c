@@ -396,7 +396,10 @@ static int iort_get_id_mapping_index(struct acpi_iort_node *node)
 
 		return smmu->id_mapping_index;
 	case ACPI_IORT_NODE_PMCG:
-		return 0;
+		if (node->mapping_count)
+			return 0;
+		/* overflow interrupt is wire based */
+		return -EINVAL;
 	default:
 		return -EINVAL;
 	}
