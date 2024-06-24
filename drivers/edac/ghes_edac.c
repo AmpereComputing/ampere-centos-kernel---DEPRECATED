@@ -28,7 +28,7 @@ struct ghes_edac_pvt {
 	char msg[80];
 };
 
-static atomic_t ghes_init = ATOMIC_INIT(0);
+static atomic_t ghes_refs = ATOMIC_INIT(0);
 static struct ghes_edac_pvt *ghes_pvt;
 
 /*
@@ -454,7 +454,7 @@ int ghes_edac_register(struct ghes *ghes, struct device *dev)
 	/*
 	 * We have only one logical memory controller to which all DIMMs belong.
 	 */
-	if (atomic_inc_return(&ghes_init) > 1)
+	if (atomic_inc_return(&ghes_refs) > 1)
 		return 0;
 
 	/* Get the number of DIMMs */
