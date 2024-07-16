@@ -1,3 +1,7 @@
+DEPRECATED
+This repository is deprecated and set to archive status. It will eventually be deleted.
+
+
 Ampere CentOS kernel
 
 This is Ampere CentOS kernel with all required changes to support
